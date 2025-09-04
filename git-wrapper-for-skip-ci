@@ -1,0 +1,40 @@
+#!/bin/bash -eu
+
+GIT=/bin/git
+
+# このスクリプトは、`git` コマンドをラップして、`commit` コマンドのメッセージに `[skip ci]` を自動で付加します。
+
+# 最初の引数が 'commit' であるかチェック
+if [ "$1" == "commit" ]; then
+    # 引数のループを開始
+    args=()
+    skip_next=false
+    for arg in "$@"; do
+        if $skip_next; then
+            # 'commit' または '-m' の次の引数に '[skip ci]' を追加
+            args+=("$arg [skip ci]")
+            skip_next=false
+        elif [ "$arg" == "-m" ]; then
+            # '-m' オプションを検出
+            args+=("$arg")
+            skip_next=true
+        else
+            # その他の引数はそのまま追加
+            args+=("$arg")
+        fi
+    done
+
+    # 修正がある場合は、元のメッセージを元に `--amend` を考慮した処理
+    if [[ " $@ " =~ " --amend " && ! " $@ " =~ " -m " ]]; then
+        # `git commit --amend` の場合、元のメッセージを取得して追記
+        current_msg=$(git log -1 --pretty=%B)
+        $GIT commit --amend -m "$current_msg [skip ci]"
+    else
+        # 修正がない場合は、新しいメッセージでコミット
+        $GIT "${args[@]}"
+    fi
+else
+    # 'commit' 以外のコマンドはそのまま実行
+    $GIT "$@"
+fi
+
