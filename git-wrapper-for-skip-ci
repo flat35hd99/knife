@@ -14,7 +14,7 @@ if [ "$1" == "commit" ]; then
             # 'commit' または '-m' の次の引数に '[skip ci]' を追加
             args+=("$arg [skip ci]")
             skip_next=false
-        elif [ "$arg" == "-m" ]; then
+        elif [ "$arg" == "-m" || "$arg" == "--message" ]; then
             # '-m' オプションを検出
             args+=("$arg")
             skip_next=true
